@@ -53,6 +53,7 @@ process_by_new_line = raw.split("\n")
 process_by_space    = raw.split(" ")
 process_by_tab      = raw.split("\t")
 
+# And find out which is the right one for executing.
 pre_process_resource = ''
 if process_by_new_line.length > 1
   pre_process_resource = process_by_new_line
@@ -72,16 +73,20 @@ end
 commands = remaining.join(' ')
 
 if options[:dev]
-  puts "options: #{options}\n
-  raw: #{raw}\n
-  raw length: #{raw.length} | process_by_new_line: #{process_by_new_line.length} | process_by_space: #{process_by_space.length} | process_by_tab: #{process_by_tab.length}\n
-  pre_process_resource: #{pre_process_resource}\n
-  commands: #{remaining}\n"
+  puts "OPTIONS: \n#{options}\n
+RAW: \n#{raw}\n
+LENGTH \nraw: #{raw.length} | process_by_new_line: #{process_by_new_line.length} | process_by_space: #{process_by_space.length} | process_by_tab: #{process_by_tab.length}\n
+PRE PRECESS RESOURCE: \n#{pre_process_resource}\n
+COMMANDS: \n#{remaining}\n"
 
-  # pre_process_resource.each do |resource|
-  #   STDOUT.puts `#{commands} #{resource}`
-  # end
   STDOUT.puts "\nEXECUTABLE COMMAND:\n#{commands} #{pre_process_resource.join(' ')}"
+  STDOUT.puts "\nRESULT:\n"
 end
 
-STDOUT.puts "\nRESULT:\n" + `#{commands} #{pre_process_resource.join(' ')}`
+if options[:max_args]
+  pre_process_resource.each_slice(options[:max_args].to_i) do |resource|
+    STDOUT.puts `#{commands} #{resource.join(' ')}`
+  end
+else
+  STDOUT.puts `#{commands} #{pre_process_resource.join(' ')}`
+end
