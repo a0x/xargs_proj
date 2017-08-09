@@ -1,0 +1,83 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+
+options = {}
+opt_parser = OptionParser.new do |opt|
+  opt.banner = "Usage: opt_parser COMMAND [OPTIONS]"
+  opt.separator  ""
+  opt.separator  "Commands"
+  opt.separator  "     start: start server"
+  opt.separator  "     stop: stop server"
+  opt.separator  "     restart: restart server"
+  opt.separator  ""
+  opt.separator  "Options"
+
+  opt.on("-n", "--max-args=max-args", "max args") do |max_args|
+    # Use at most max-args arguments per command line.
+    options[:max_args] = max_args
+  end
+
+  opt.on("-P", "--max-procs=max-procs", "max procs") do |max_procs|
+    # Run up to max-procs processes at a time; the default is 1.  If max-procs is 0, xargs will run as many
+    # processes as possible at a time.  Use the -n option or the -L option with -P; otherwise  chances  are
+    # that  only  one exec will be done.  While xargs is running, you can send its process a SIGUSR1 signal
+    # to increase the number of commands to run simultaneously, or a SIGUSR2 to decrease the  number.   You
+    # cannot  increase  it  above an implementation-defined limit (which is shown with --show-limits).  You
+    # cannot decrease it below 1.  xargs never terminates its commands; when asked to decrease,  it  merely
+    # waits for more than one existing command to terminate before starting another.
+    options[:max_procs] = max_procs
+  end
+
+  opt.on("-h", "--help", "help") do
+    puts opt_parser
+  end
+end
+
+opt_parser.parse!
+
+# Read from STDIN, store the original STDIN
+raw = STDIN.read
+
+# Now we shall split STDIN into pieces.
+process_by_new_line = raw.split("\n")
+process_by_space    = raw.split(" ")
+process_by_tab      = raw.split("\t")
+
+pre_process_resource = ''
+if process_by_new_line.length > 1
+  pre_process_resource = process_by_new_line
+elsif process_by_space.length > 1
+  pre_process_resource = process_by_space
+elsif process_by_tab.length > 1
+  pre_process_resource = process_by_tab
+else
+  pre_process_resource = raw
+end
+
+if pre_process_resource.empty?
+  STDERR.puts "Error with STDIN"
+end
+
+# Build command from ARGV, with the command itself and options
+commands = ''
+ARGV.each do |arg|
+  commands += arg + ' '
+end
+
+
+puts "options: #{options}\n
+raw: #{raw}\n
+raw length: #{raw.length} | process_by_new_line: #{process_by_new_line.length} | process_by_space: #{process_by_space.length} | process_by_tab: #{process_by_tab.length}\n
+pre_process_resource: #{pre_process_resource}\n
+commands: #{ARGV}\n"
+
+# pre_process_resource.each do |resource|
+#   STDOUT.puts `#{commands} #{resource}`
+# end
+
+STDOUT.puts "\nRESULT:\n" + `#{commands} #{pre_process_resource.join(' ')}`
+
+# incomes.each do |income|
+#   STDOUT.puts `#{ARGV[0]} #{ARGV[1]} #{income}`
+# end
