@@ -1,14 +1,12 @@
 # 测试
 
 1. 测试xargs的基本功能
-  命令：ls *.txt | xargs wc -l
+  命令：ls . | xargs wc -l
   预期返回：
-    10253 a.js
-    10253 b.js
-    10253 c.js
-    10253 d.js
-    10253 e.js
-    51265 total
+      80 readme.txt
+      99 xargs
+     179 total
+
 
 2. 测试功能参数-n
   命令：echo {0..8} | xargs -n 2 echo
@@ -20,10 +18,10 @@
   8
 
 3. 测试参数接收
-  命令：echo {0..8} | xargs -n 2 -P 5 -d echo
+  命令：echo {0..8} | xargs -n 2 -d echo
   预期返回：
   OPTIONS:
-  {:max_args=>"2", :max_procs=>"5", :dev=>true}
+  {:max_args=>"2", :dev=>true}
 
   RAW:
   0 1 2 3 4 5 6 7 8
