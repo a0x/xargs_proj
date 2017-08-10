@@ -10,13 +10,8 @@ opt_parser = OptionParser.new do |opt|
   end
 
   opt.on("-P", "--max-procs=max-procs", "max procs") do |max_procs|
-    # Run up to max-procs processes at a time; the default is 1.  If max-procs is 0, xargs will run as many
-    # processes as possible at a time.  Use the -n option or the -L option with -P; otherwise  chances  are
-    # that  only  one exec will be done.  While xargs is running, you can send its process a SIGUSR1 signal
-    # to increase the number of commands to run simultaneously, or a SIGUSR2 to decrease the  number.   You
-    # cannot  increase  it  above an implementation-defined limit (which is shown with --show-limits).  You
-    # cannot decrease it below 1.  xargs never terminates its commands; when asked to decrease,  it  merely
-    # waits for more than one existing command to terminate before starting another.
+    # Run up to max-procs processes at a time; the default is 1.
+    # If max-procs is 0, xargs will run as many processes as possible at a time.
     options[:max_procs] = max_procs
   end
 
@@ -72,6 +67,10 @@ end
 # Build command from the remaining, with the command itself and options
 commands = remaining.join(' ')
 
+def execute_command(command, input)
+  STDOUT.puts `#{command} #{input}`
+end
+
 if options[:dev]
   puts "OPTIONS: \n#{options}\n
 RAW: \n#{raw}\n
@@ -85,8 +84,8 @@ end
 
 if options[:max_args]
   pre_process_resource.each_slice(options[:max_args].to_i) do |resource|
-    STDOUT.puts `#{commands} #{resource.join(' ')}`
+    execute_command(commands, resource.join(' '))
   end
 else
-  STDOUT.puts `#{commands} #{pre_process_resource.join(' ')}`
+  execute_command(commands, pre_process_resource.join(' '))
 end
