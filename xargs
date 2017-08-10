@@ -9,11 +9,11 @@ opt_parser = OptionParser.new do |opt|
     options[:max_args] = max_args
   end
 
-  opt.on("-P", "--max-procs=max-procs", "max procs") do |max_procs|
-    # Run up to max-procs processes at a time; the default is 1.
-    # If max-procs is 0, xargs will run as many processes as possible at a time.
-    options[:max_procs] = max_procs
-  end
+  # opt.on("-P", "--max-procs=max-procs", "max procs") do |max_procs|
+  #   # Run up to max-procs processes at a time; the default is 1.
+  #   # If max-procs is 0, xargs will run as many processes as possible at a time.
+  #   options[:max_procs] = max_procs
+  # end
 
   opt.on("-d", "--dev", "dev mode") do
     options[:dev] = true
@@ -21,7 +21,7 @@ opt_parser = OptionParser.new do |opt|
 end
 
 # Rescue other options from opt_parser, so that other commands with its original options are allowed.
-leagal_options = ['-n', '-P', '--max-args', '--max-procs', '-d', '--dev']
+leagal_options = ['-n', '-d']
 raw_options = ARGV.dup
 remaining = []
 while !raw_options.empty?
@@ -37,8 +37,6 @@ while !raw_options.empty?
     retry
   end
 end
-
-# opt_parser.parse!
 
 # Read from STDIN, store the original STDIN
 raw = STDIN.read
@@ -65,7 +63,17 @@ if pre_process_resource.empty?
 end
 
 # Build command from the remaining, with the command itself and options
-commands = remaining.join(' ')
+valid_start_index = 0
+remaining.each_with_index do |elem, index|
+  unless elem.start_with? '-'
+    valid_start_index = index
+    break
+  end
+end
+commands = remaining[valid_start_index..-1].join(' ')
+if valid_start_index > 0
+  STDOUT.puts "WARNING: #{remaining[0..valid_start_index-1]} options undefined"
+end
 
 def execute_command(command, input)
   STDOUT.puts `#{command} #{input}`
@@ -76,13 +84,14 @@ if options[:dev]
 RAW: \n#{raw}\n
 LENGTH \nraw: #{raw.length} | process_by_new_line: #{process_by_new_line.length} | process_by_space: #{process_by_space.length} | process_by_tab: #{process_by_tab.length}\n
 PRE PRECESS RESOURCE: \n#{pre_process_resource}\n
-COMMANDS: \n#{remaining}\n"
+RAW COMMANDS: \n#{remaining}\n
+LEGAL COMMANDS: \n#{commands}\n"
 
   STDOUT.puts "\nEXECUTABLE COMMAND:\n#{commands} #{pre_process_resource.join(' ')}"
   STDOUT.puts "\nRESULT:\n"
 end
 
-if options[:max_args]
+if options[:max_args] && options[:max_args].to_i
   pre_process_resource.each_slice(options[:max_args].to_i) do |resource|
     execute_command(commands, resource.join(' '))
   end
